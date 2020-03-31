@@ -1,7 +1,9 @@
 package NettyServerCourseWork;
 
+import NettyServerCourseWork.handler.BalanceHandler;
 import NettyServerCourseWork.handler.RegistrationHandler;
 import NettyServerCourseWork.repository.PlayerRepository;
+import NettyServerCourseWork.util.TokenService;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -25,10 +27,12 @@ public class Server {
     private int port;
 
     private final PlayerRepository playerRepository;
+    private final TokenService tokenService;
 
     @Autowired
-    public Server(PlayerRepository playerRepository) {
+    public Server(PlayerRepository playerRepository, TokenService tokenService) {
         this.playerRepository = playerRepository;
+        this.tokenService = tokenService;
     }
 
     public void run() throws Exception {
@@ -44,7 +48,8 @@ public class Server {
                             ch.pipeline().addLast(
                                     new LoggingHandler(LogLevel.INFO),
                                     new StringEncoder(StandardCharsets.UTF_8),
-                                    new RegistrationHandler(playerRepository)
+                                    new RegistrationHandler(playerRepository, tokenService),
+                                    new BalanceHandler(tokenService)
                             );
                         }
                     })
