@@ -1,7 +1,6 @@
 package NettyServerCourseWork;
 
-import NettyServerCourseWork.handler.BalanceHandler;
-import NettyServerCourseWork.handler.RegistrationHandler;
+import NettyServerCourseWork.handler.BaseHandler;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.util.TokenService;
 import io.netty.bootstrap.ServerBootstrap;
@@ -9,12 +8,15 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -28,6 +30,8 @@ public class Server {
 
     private final PlayerRepository playerRepository;
     private final TokenService tokenService;
+
+    private final Session session = new Session();
 
     @Autowired
     public Server(PlayerRepository playerRepository, TokenService tokenService) {
@@ -48,8 +52,7 @@ public class Server {
                             ch.pipeline().addLast(
                                     new LoggingHandler(LogLevel.INFO),
                                     new StringEncoder(StandardCharsets.UTF_8),
-                                    new RegistrationHandler(playerRepository, tokenService),
-                                    new BalanceHandler(tokenService)
+                                    new BaseHandler(tokenService, playerRepository, session)
                             );
                         }
                     })

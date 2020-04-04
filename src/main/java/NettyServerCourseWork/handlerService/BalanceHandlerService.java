@@ -1,24 +1,22 @@
-package NettyServerCourseWork.handler;
+package NettyServerCourseWork.handlerService;
 
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.util.TokenService;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class BalanceHandler extends ChannelInboundHandlerAdapter {
+public class BalanceHandlerService {
 
     private final TokenService tokenService;
 
-    public BalanceHandler(TokenService tokenService) {
+    public BalanceHandlerService(TokenService tokenService) {
         this.tokenService = tokenService;
     }
 
-    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         Map<String, String> data = getMapData((ByteBuf) msg);
         switch (data.get("command")){
@@ -60,12 +58,5 @@ public class BalanceHandler extends ChannelInboundHandlerAdapter {
         } catch (Exception e){
             return Map.of("command", "error");
         }
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { // (4)
-        // Close the connection when an exception is raised.
-        cause.printStackTrace();
-        ctx.close();
     }
 }

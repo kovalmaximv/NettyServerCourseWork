@@ -1,26 +1,27 @@
-package NettyServerCourseWork.handler;
+package NettyServerCourseWork.handlerService;
 
+import NettyServerCourseWork.Session;
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.util.TokenService;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class RegistrationHandler extends ChannelInboundHandlerAdapter {
+public class RegistrationHandlerService {
 
     private final PlayerRepository playerRepository;
     private final TokenService tokenService;
+    private final Session session;
 
-    public RegistrationHandler(PlayerRepository playerRepository, TokenService tokenService) {
+    public RegistrationHandlerService(PlayerRepository playerRepository, TokenService tokenService, Session session) {
         this.playerRepository = playerRepository;
         this.tokenService = tokenService;
+        this.session = session;
     }
 
-    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         Map<String, String> data = getMapData((ByteBuf) msg);
         switch (data.get("command")){
@@ -28,6 +29,9 @@ public class RegistrationHandler extends ChannelInboundHandlerAdapter {
                 try{
                     Player player = registerPlayer(data);
                     String token = tokenService.generateToken(player);
+
+                    session.addPlayer(token, ctx.channel());
+
                     ctx.channel().writeAndFlush(">>Registration successful, token:  " + token + "\n");
                 } catch (Exception e){
                     ctx.channel().writeAndFlush(">>Registration error: " + e.getMessage() + "\n");
@@ -39,19 +43,16 @@ public class RegistrationHandler extends ChannelInboundHandlerAdapter {
                 String password = data.get("password");
                 Player player = playerRepository.findByUsernameAndPassword(username, password);
                 if(player != null){
-                    ctx.channel().writeAndFlush(">>Token:" + tokenService.getToken(player) + "\n");
+                    String token = tokenService.getToken(player);
+
+                    session.addPlayer(token, ctx.channel());
+
+                    ctx.channel().writeAndFlush(">>Token:" + token + "\n");
                 } else {
                     ctx.channel().writeAndFlush(">>Invalid username and/or password\n");
                 }
                 break;
         }
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { // (4)
-        // Close the connection when an exception is raised.
-        cause.printStackTrace();
-        ctx.close();
     }
 
     private Map<String, String> getMapData(ByteBuf data){
