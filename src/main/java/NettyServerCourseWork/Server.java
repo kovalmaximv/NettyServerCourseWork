@@ -1,6 +1,7 @@
 package NettyServerCourseWork;
 
 import NettyServerCourseWork.handler.BaseHandler;
+import NettyServerCourseWork.repository.GameRepository;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.util.TokenService;
 import io.netty.bootstrap.ServerBootstrap;
@@ -8,15 +9,12 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.concurrent.GlobalEventExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -30,13 +28,15 @@ public class Server {
 
     private final PlayerRepository playerRepository;
     private final TokenService tokenService;
+    private final GameRepository gameRepository;
 
     private final Session session = new Session();
 
     @Autowired
-    public Server(PlayerRepository playerRepository, TokenService tokenService) {
+    public Server(PlayerRepository playerRepository, TokenService tokenService, GameRepository gameRepository) {
         this.playerRepository = playerRepository;
         this.tokenService = tokenService;
+        this.gameRepository = gameRepository;
     }
 
     public void run() throws Exception {
@@ -52,7 +52,7 @@ public class Server {
                             ch.pipeline().addLast(
                                     new LoggingHandler(LogLevel.INFO),
                                     new StringEncoder(StandardCharsets.UTF_8),
-                                    new BaseHandler(tokenService, playerRepository, session)
+                                    new BaseHandler(tokenService, playerRepository, session, gameRepository)
                             );
                         }
                     })

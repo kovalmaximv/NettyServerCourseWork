@@ -10,6 +10,10 @@ public class Session extends HashMap<String, Channel> {
         addPlayer(token, channel);
     }
 
+    public Channel getChannelByPlayer(String token){
+        return get(token);
+    }
+
     public void addPlayer(String token, Channel channel){
         this.put(token, channel);
     }

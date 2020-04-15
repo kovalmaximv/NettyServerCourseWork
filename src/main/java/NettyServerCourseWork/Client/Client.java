@@ -1,5 +1,6 @@
 package NettyServerCourseWork.Client;
 
+import NettyServerCourseWork.model.ResponseData;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -13,10 +14,10 @@ import io.netty.handler.codec.string.StringEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class Client {
-    public static void main(String[] args) throws Exception {
-        String host = "localhost";
-        int port = 8090;
+    public static ResponseData connect(String host, String port, String message) throws Exception {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
+
+        ResponseData responseData = new ResponseData();
 
         try {
             Bootstrap b = new Bootstrap(); // (1)
@@ -28,18 +29,18 @@ public class Client {
                 public void initChannel(SocketChannel ch) throws Exception {
                     ch.pipeline().addLast(
                             new StringEncoder(StandardCharsets.UTF_8),
-                            new ClientHandler()
+                            new ClientHandler(message, responseData)
                     );
                 }
             });
 
-            // Start the client.
-            ChannelFuture f = b.connect(host, port).sync(); // (5)
+            ChannelFuture f = b.connect(host, Integer.parseInt(port)).sync();
 
-            // Wait until the connection is closed.
             f.channel().closeFuture().sync();
         } finally {
             workerGroup.shutdownGracefully();
         }
+
+        return responseData;
     }
 }

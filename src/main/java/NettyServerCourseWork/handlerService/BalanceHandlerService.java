@@ -1,6 +1,7 @@
 package NettyServerCourseWork.handlerService;
 
 import NettyServerCourseWork.model.Player;
+import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.util.TokenService;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,20 +13,23 @@ import java.util.Map;
 public class BalanceHandlerService {
 
     private final TokenService tokenService;
+    private final PlayerRepository playerRepository;
 
-    public BalanceHandlerService(TokenService tokenService) {
+    public BalanceHandlerService(TokenService tokenService, PlayerRepository playerRepository) {
         this.tokenService = tokenService;
+        this.playerRepository = playerRepository;
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         Map<String, String> data = getMapData((ByteBuf) msg);
         switch (data.get("command")){
             case "balance":
-                ctx.channel().writeAndFlush(">>Balance: + " + getBalance(data) + "\n");
+                ctx.channel().writeAndFlush(">>Balance: " + getBalance(data) + "\n");
                 break;
 
             case "pay":
                 pay(data);
+                ctx.channel().writeAndFlush(">>Balance replenished\n");
                 break;
 
         }
@@ -34,13 +38,13 @@ public class BalanceHandlerService {
     @Transactional
     void pay(Map<String, String> data){
         Player player = tokenService.getPlayerByToken(data.get("token"));
-        player.setBalance(player.getBalance() +Integer.parseInt(data.get("sum")));
+        player.setBalance(player.getBalance() + Integer.parseInt(data.get("sum")));
+        playerRepository.save(player);
     }
 
     private Integer getBalance(Map<String, String> data){
         Player player = tokenService.getPlayerByToken(data.get("token"));
         return player.getBalance();
-
     }
 
     private Map<String, String> getMapData(ByteBuf data){
