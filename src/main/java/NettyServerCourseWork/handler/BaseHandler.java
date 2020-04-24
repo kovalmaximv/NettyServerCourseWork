@@ -2,6 +2,7 @@ package NettyServerCourseWork.handler;
 
 import NettyServerCourseWork.Session;
 import NettyServerCourseWork.handlerService.BalanceHandlerService;
+import NettyServerCourseWork.handlerService.ChatHandlerService;
 import NettyServerCourseWork.handlerService.GameHandlerService;
 import NettyServerCourseWork.handlerService.GameResultHandlerService;
 import NettyServerCourseWork.handlerService.HelpHandlerService;
@@ -23,12 +24,14 @@ public class BaseHandler extends ChannelInboundHandlerAdapter {
     private final GameHandlerService gameHandlerService;
     private final GameResultHandlerService gameResultHandlerService;
     private final Session session;
+    private final ChatHandlerService chatHandlerService;
 
     public BaseHandler(
             TokenService tokenService,
             PlayerRepository playerRepository,
             Session session,
             GameRepository gameRepository) {
+        this.chatHandlerService = new ChatHandlerService(tokenService, session, playerRepository);
         this.balanceHandlerService = new BalanceHandlerService(tokenService, playerRepository);
         this.gameResultHandlerService = new GameResultHandlerService(session, tokenService, playerRepository);
         this.gameHandlerService = new GameHandlerService(gameRepository, tokenService, session, playerRepository);
@@ -49,10 +52,6 @@ public class BaseHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        String command = ((ByteBuf)msg).toString(Charset.defaultCharset()).trim().split(" ")[0];
-
-
-        System.out.println("connect");
         switch (getCommand((ByteBuf) msg)){
             case "login":
             case "registration":
@@ -67,6 +66,9 @@ public class BaseHandler extends ChannelInboundHandlerAdapter {
                 break;
             case "gameResults":
                 gameResultHandlerService.channelRead(ctx, msg);
+                break;
+            case "chat":
+                chatHandlerService.channelRead(ctx, msg);
                 break;
             case "help":
                 helpHandlerService.channelRead(ctx, msg);
