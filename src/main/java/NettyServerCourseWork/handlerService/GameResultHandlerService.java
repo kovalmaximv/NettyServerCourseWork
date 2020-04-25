@@ -1,5 +1,6 @@
 package NettyServerCourseWork.handlerService;
 
+import NettyServerCourseWork.model.Notification;
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.service.SessionService;
@@ -31,7 +32,7 @@ public class GameResultHandlerService {
             playerRepository.save(player);
         }
 
-        sessionService.sendMessage(player.getId(), Arrays.toString(rawData));
+        sessionService.sendNotification(player, Arrays.toString(rawData));
     }
 
 }
