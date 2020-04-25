@@ -1,5 +1,6 @@
 package NettyServerCourseWork.handlerService;
 
+import NettyServerCourseWork.model.Message;
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.service.SessionService;
@@ -24,10 +25,12 @@ public class ChatHandlerService {
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         Map<String, String> data = getMapData((ByteBuf) msg);
+
         String tokenTo = tokenService.getToken(playerRepository.findByUsername(data.get("to")));
-        String userFrom = tokenService.getPlayerByToken(data.get("token")).getUsername();
+        Player playerFrom = tokenService.getPlayerByToken(data.get("token"));
         Player playerTo = tokenService.getPlayerByToken(tokenTo);
-        sessionService.sendMessage(playerTo.getId(), "Message. From: " + userFrom + ". Message: " + data.get("message") + "\n");
+
+        sessionService.sendMessage(playerFrom, playerTo, "Message. From: " + playerFrom.getUsername() + ". Message: " + data.get("message") + "\n");
     }
 
     private Map<String, String> getMapData(ByteBuf data){

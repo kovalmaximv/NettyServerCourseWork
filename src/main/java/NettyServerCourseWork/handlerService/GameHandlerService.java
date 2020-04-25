@@ -1,6 +1,7 @@
 package NettyServerCourseWork.handlerService;
 
 import NettyServerCourseWork.Client.Client;
+import NettyServerCourseWork.model.Notification;
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.model.ResponseData;
 import NettyServerCourseWork.repository.GameRepository;
@@ -36,15 +37,14 @@ public class GameHandlerService {
 
             Player player = tokenService.getPlayerByToken(getToken(rawData));
 
-
             if(responseData.getIntValue() == 200){
                 Integer betSum = Integer.parseInt(rawData[rawData.length-1]);
                 player.setBalance(player.getBalance() - betSum);
                 playerRepository.save(player);
 
-                sessionService.sendMessage(player.getId(), "Ваша ставка принята, ожидайте ответа по окончанию игры.\n");
+                sessionService.sendNotification(player, "Ваша ставка принята, ожидайте ответа по окончанию игры.\n");
             } else {
-                sessionService.sendMessage(player.getId(), "В игровом лобби нет места, обратитесь позже.\n");
+                sessionService.sendNotification(player, "В игровом лобби нет места, обратитесь позже.\n");
             }
 
         } else {
