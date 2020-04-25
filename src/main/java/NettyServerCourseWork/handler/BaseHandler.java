@@ -1,6 +1,5 @@
 package NettyServerCourseWork.handler;
 
-import NettyServerCourseWork.Session;
 import NettyServerCourseWork.handlerService.BalanceHandlerService;
 import NettyServerCourseWork.handlerService.ChatHandlerService;
 import NettyServerCourseWork.handlerService.GameHandlerService;
@@ -9,7 +8,8 @@ import NettyServerCourseWork.handlerService.HelpHandlerService;
 import NettyServerCourseWork.handlerService.RegistrationHandlerService;
 import NettyServerCourseWork.repository.GameRepository;
 import NettyServerCourseWork.repository.PlayerRepository;
-import NettyServerCourseWork.util.TokenService;
+import NettyServerCourseWork.service.SessionService;
+import NettyServerCourseWork.service.TokenService;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -23,31 +23,22 @@ public class BaseHandler extends ChannelInboundHandlerAdapter {
     private final HelpHandlerService helpHandlerService;
     private final GameHandlerService gameHandlerService;
     private final GameResultHandlerService gameResultHandlerService;
-    private final Session session;
     private final ChatHandlerService chatHandlerService;
 
+    private final SessionService sessionService;
+
     public BaseHandler(
+            SessionService sessionService,
             TokenService tokenService,
             PlayerRepository playerRepository,
-            Session session,
             GameRepository gameRepository) {
-        this.chatHandlerService = new ChatHandlerService(tokenService, session, playerRepository);
+        this.sessionService = sessionService;
+        this.chatHandlerService = new ChatHandlerService(tokenService, playerRepository, sessionService);
         this.balanceHandlerService = new BalanceHandlerService(tokenService, playerRepository);
-        this.gameResultHandlerService = new GameResultHandlerService(session, tokenService, playerRepository);
-        this.gameHandlerService = new GameHandlerService(gameRepository, tokenService, session, playerRepository);
-        this.registrationHandlerService = new RegistrationHandlerService(playerRepository, tokenService, session);
+        this.gameResultHandlerService = new GameResultHandlerService(tokenService, playerRepository, sessionService);
+        this.gameHandlerService = new GameHandlerService(gameRepository, tokenService, playerRepository, sessionService);
+        this.registrationHandlerService = new RegistrationHandlerService(playerRepository, tokenService, sessionService);
         this.helpHandlerService = new HelpHandlerService(gameRepository);
-        this.session = session;
-    }
-
-    @Override
-    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        session.forEach((key, value) -> { //BAD DECISION, NEED TO FIX
-            if (value.equals(ctx)){
-                session.remove(key);
-            }
-        });
-        super.channelUnregistered(ctx);
     }
 
     @Override
@@ -74,6 +65,12 @@ public class BaseHandler extends ChannelInboundHandlerAdapter {
                 helpHandlerService.channelRead(ctx, msg);
                 break;
         }
+    }
+
+    @Override
+    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+        sessionService.unregisterSessionUser(ctx.channel());
+        super.channelUnregistered(ctx);
     }
 
     @Override

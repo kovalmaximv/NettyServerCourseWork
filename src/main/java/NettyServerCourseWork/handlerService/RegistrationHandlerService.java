@@ -1,9 +1,9 @@
 package NettyServerCourseWork.handlerService;
 
-import NettyServerCourseWork.Session;
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.repository.PlayerRepository;
-import NettyServerCourseWork.util.TokenService;
+import NettyServerCourseWork.service.SessionService;
+import NettyServerCourseWork.service.TokenService;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -14,12 +14,12 @@ public class RegistrationHandlerService {
 
     private final PlayerRepository playerRepository;
     private final TokenService tokenService;
-    private final Session session;
+    private final SessionService sessionService;
 
-    public RegistrationHandlerService(PlayerRepository playerRepository, TokenService tokenService, Session session) {
+    public RegistrationHandlerService(PlayerRepository playerRepository, TokenService tokenService, SessionService sessionService) {
         this.playerRepository = playerRepository;
         this.tokenService = tokenService;
-        this.session = session;
+        this.sessionService = sessionService;
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -30,7 +30,7 @@ public class RegistrationHandlerService {
                     Player player = registerPlayer(data);
                     String token = tokenService.generateToken(player);
 
-                    session.addPlayer(token, ctx.channel());
+                    sessionService.registerSessionUser(player.getId(), ctx.channel());
 
                     ctx.channel().writeAndFlush(">>Registration successful, token:  " + token + "\n");
                 } catch (Exception e){
@@ -45,7 +45,7 @@ public class RegistrationHandlerService {
                 if(player != null){
                     String token = tokenService.getToken(player);
 
-                    session.addPlayer(token, ctx.channel());
+                    sessionService.registerSessionUser(player.getId(), ctx.channel());
 
                     ctx.channel().writeAndFlush(">>Token:" + token + "\n");
                 } else {

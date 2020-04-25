@@ -1,14 +1,13 @@
 package NettyServerCourseWork.handlerService;
 
 import NettyServerCourseWork.Client.Client;
-import NettyServerCourseWork.Session;
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.model.ResponseData;
 import NettyServerCourseWork.repository.GameRepository;
 import NettyServerCourseWork.repository.PlayerRepository;
-import NettyServerCourseWork.util.TokenService;
+import NettyServerCourseWork.service.SessionService;
+import NettyServerCourseWork.service.TokenService;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.nio.charset.Charset;
@@ -17,14 +16,14 @@ public class GameHandlerService {
 
     private final GameRepository gameRepository;
     private final TokenService tokenService;
-    private final Session session;
     private final PlayerRepository playerRepository;
+    private final SessionService sessionService;
 
-    public GameHandlerService(GameRepository gameRepository, TokenService tokenService, Session session, PlayerRepository playerRepository) {
+    public GameHandlerService(GameRepository gameRepository, TokenService tokenService, PlayerRepository playerRepository, SessionService sessionService) {
         this.gameRepository = gameRepository;
         this.tokenService = tokenService;
-        this.session = session;
         this.playerRepository = playerRepository;
+        this.sessionService = sessionService;
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -35,21 +34,21 @@ public class GameHandlerService {
             ResponseData responseData = Client.connect(connectionData[0], connectionData[1],
                     ((ByteBuf)msg).toString(Charset.defaultCharset()));
 
-            String token = getToken(rawData);
-            Channel channelByPlayer = session.getChannelByPlayer(token);
+            Player player = tokenService.getPlayerByToken(getToken(rawData));
+
+
             if(responseData.getIntValue() == 200){
                 Integer betSum = Integer.parseInt(rawData[rawData.length-1]);
-                Player player = tokenService.getPlayerByToken(token);
                 player.setBalance(player.getBalance() - betSum);
                 playerRepository.save(player);
 
-                channelByPlayer.writeAndFlush("Ваша ставка принята, ожидайте ответа по окончанию игры.");
+                sessionService.sendMessage(player.getId(), "Ваша ставка принята, ожидайте ответа по окончанию игры.\n");
             } else {
-                channelByPlayer.writeAndFlush("В игровом лобби нет места, обратитесь позже");
+                sessionService.sendMessage(player.getId(), "В игровом лобби нет места, обратитесь позже.\n");
             }
 
         } else {
-            ctx.channel().writeAndFlush("wrong game name\n");
+            ctx.channel().writeAndFlush("Неверное название игры.\n");
         }
     }
 

@@ -2,7 +2,7 @@ package NettyServerCourseWork.handlerService;
 
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.repository.PlayerRepository;
-import NettyServerCourseWork.util.TokenService;
+import NettyServerCourseWork.service.TokenService;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import org.springframework.transaction.annotation.Transactional;
