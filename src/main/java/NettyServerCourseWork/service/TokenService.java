@@ -1,13 +1,13 @@
-package NettyServerCourseWork.util;
+package NettyServerCourseWork.service;
 
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.repository.TokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 
-@Component
+@Service
 public class TokenService {
     private static SecureRandom random = new SecureRandom();
     private static final int tokenSize = 16;
