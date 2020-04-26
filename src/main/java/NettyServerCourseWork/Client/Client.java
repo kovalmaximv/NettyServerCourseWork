@@ -1,6 +1,6 @@
 package NettyServerCourseWork.Client;
 
-import NettyServerCourseWork.model.ResponseData;
+import NettyServerCourseWork.util.ResponseStatuses;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -14,10 +14,10 @@ import io.netty.handler.codec.string.StringEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class Client {
-    public static ResponseData connect(String host, String port, String message) throws Exception {
+    public static ResponseStatuses connect(String host, String port, String message) throws Exception {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-        ResponseData responseData = new ResponseData();
+        ResponseStatuses responseStatus = null;
 
         try {
             Bootstrap b = new Bootstrap(); // (1)
@@ -29,7 +29,7 @@ public class Client {
                 public void initChannel(SocketChannel ch) throws Exception {
                     ch.pipeline().addLast(
                             new StringEncoder(StandardCharsets.UTF_8),
-                            new ClientHandler(message, responseData)
+                            new ClientHandler(message, responseStatus)
                     );
                 }
             });
@@ -41,6 +41,6 @@ public class Client {
             workerGroup.shutdownGracefully();
         }
 
-        return responseData;
+        return responseStatus;
     }
 }

@@ -24,6 +24,7 @@ public class HelpHandlerService {
                     ">>\tgame <gamename> <token> [bet] <ставка>\n" +
                     ">>\tbalance <token>\n" +
                     ">>\tpay <token> <sum>\n" +
+                    ">>\tchat <token> <to> <message>\n" +
                     ">>\thelp game\n" +
                     ">>\thelp\n";
             ctx.channel().writeAndFlush(message);

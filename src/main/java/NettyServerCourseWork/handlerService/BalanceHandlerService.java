@@ -48,7 +48,7 @@ public class BalanceHandlerService {
     }
 
     private Map<String, String> getMapData(ByteBuf data){
-        String[] rawData = ((ByteBuf) data).toString(Charset.defaultCharset()).trim().split(" ");
+        String[] rawData = data.toString(Charset.defaultCharset()).trim().split(" ");
 
         try {
             if(rawData[0].equals("balance")){

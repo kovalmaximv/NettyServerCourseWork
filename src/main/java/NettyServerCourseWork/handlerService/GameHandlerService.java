@@ -1,13 +1,12 @@
 package NettyServerCourseWork.handlerService;
 
 import NettyServerCourseWork.Client.Client;
-import NettyServerCourseWork.model.Notification;
 import NettyServerCourseWork.model.Player;
-import NettyServerCourseWork.model.ResponseData;
 import NettyServerCourseWork.repository.GameRepository;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.service.SessionService;
 import NettyServerCourseWork.service.TokenService;
+import NettyServerCourseWork.util.ResponseStatuses;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -32,21 +31,26 @@ public class GameHandlerService {
         String gameName = getGameName(rawData);
         if(!gameName.equals("error")){
             String[] connectionData = gameRepository.getConnectInfo(gameName);
-            ResponseData responseData = Client.connect(connectionData[0], connectionData[1],
+            ResponseStatuses responseStatus = Client.connect(connectionData[0], connectionData[1],
                     ((ByteBuf)msg).toString(Charset.defaultCharset()));
 
             Player player = tokenService.getPlayerByToken(getToken(rawData));
 
-            if(responseData.getIntValue() == 200){
-                Integer betSum = Integer.parseInt(rawData[rawData.length-1]);
-                player.setBalance(player.getBalance() - betSum);
-                playerRepository.save(player);
+            switch (responseStatus){
+                case OK:
+                    Integer betSum = Integer.parseInt(rawData[rawData.length-1]);
+                    player.setBalance(player.getBalance() - betSum);
+                    playerRepository.save(player);
 
-                sessionService.sendNotification(player, "Ваша ставка принята, ожидайте ответа по окончанию игры.\n");
-            } else {
-                sessionService.sendNotification(player, "В игровом лобби нет места, обратитесь позже.\n");
+                    sessionService.sendNotification(player, "Ваша ставка принята, ожидайте ответа по окончанию игры.\n");
+                    break;
+                case FULL_LOBBY:
+                    sessionService.sendNotification(player, "В игровом лобби нет места, обратитесь позже.\n");
+                    break;
+                case INTERNAL_ERROR:
+                    sessionService.sendNotification(player, "Произошла ошибка, просим обратиться в тех поддержку.\n");
+                    break;
             }
-
         } else {
             ctx.channel().writeAndFlush("Неверное название игры.\n");
         }

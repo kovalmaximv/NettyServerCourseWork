@@ -32,9 +32,9 @@ public class RegistrationHandlerService {
 
                     sessionService.registerSessionUser(player.getId(), ctx.channel());
 
-                    ctx.channel().writeAndFlush(">>Registration successful, token:  " + token + "\n");
+                    ctx.channel().writeAndFlush(token + "\n");
                 } catch (Exception e){
-                    ctx.channel().writeAndFlush(">>Registration error: " + e.getMessage() + "\n");
+                    ctx.channel().writeAndFlush("error: " + e.getMessage() + "\n");
                 }
                 break;
 
@@ -47,9 +47,9 @@ public class RegistrationHandlerService {
 
                     sessionService.registerSessionUser(player.getId(), ctx.channel());
 
-                    ctx.channel().writeAndFlush(">>Token:" + token + "\n");
+                    ctx.channel().writeAndFlush(token + "\n");
                 } else {
-                    ctx.channel().writeAndFlush(">>Invalid username and/or password\n");
+                    ctx.channel().writeAndFlush("error: Invalid username and/or password\n");
                 }
                 break;
         }
