@@ -10,7 +10,7 @@ import io.netty.channel.ChannelHandlerContext;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class RegistrationHandlerService {
+public class RegistrationHandlerService extends BaseHandlerService {
 
     private final PlayerRepository playerRepository;
     private final TokenService tokenService;
@@ -23,7 +23,7 @@ public class RegistrationHandlerService {
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        Map<String, String> data = getMapData((ByteBuf) msg);
+        Map<String, String> data = decryptByteBuff((ByteBuf) msg);
         switch (data.get("command")){
             case "registration":
                 try{
@@ -55,8 +55,14 @@ public class RegistrationHandlerService {
         }
     }
 
-    private Map<String, String> getMapData(ByteBuf data){
-        String[] rawData = data.toString(Charset.defaultCharset()).trim().split(" ");
+    @Override
+    String[] getCommandTrigger() {
+        return new String[]{"login", "registration"};
+    }
+
+    @Override
+    Map<String, String> decryptByteBuff(ByteBuf byteBuf) {
+        String[] rawData = byteBuf.toString(Charset.defaultCharset()).trim().split(" ");
 
         try {
             return Map.of("command", rawData[0],
@@ -75,6 +81,5 @@ public class RegistrationHandlerService {
 
         return playerRepository.save(player);
     }
-
 
 }
