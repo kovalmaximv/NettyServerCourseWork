@@ -26,7 +26,7 @@ public class GameResultHandlerService {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         String[] rawData = ((ByteBuf)msg).toString(Charset.defaultCharset()).trim().split(" ");
 
-        Player player = tokenService.getPlayerByToken(rawData[rawData.length - 3]);
+        Player player = tokenService.getPlayerByToken(rawData[1]);
         if(Integer.parseInt(rawData[rawData.length - 1]) > 0) {
             player.setBalance(player.getBalance() + Integer.parseInt(rawData[rawData.length - 1]));
             playerRepository.save(player);
