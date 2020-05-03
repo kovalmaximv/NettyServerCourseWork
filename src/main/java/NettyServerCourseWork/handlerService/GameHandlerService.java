@@ -11,8 +11,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.nio.charset.Charset;
+import java.util.Map;
 
-public class GameHandlerService {
+public class GameHandlerService extends BaseHandlerService{
 
     private final GameRepository gameRepository;
     private final TokenService tokenService;
@@ -27,18 +28,18 @@ public class GameHandlerService {
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        String[] rawData = ((ByteBuf)msg).toString(Charset.defaultCharset()).trim().split(" ");
-        String gameName = getGameName(rawData);
+        Map<String, String> command = decryptByteBuff((ByteBuf)msg);
+        String gameName = command.get("gameName");
         if(!gameName.equals("error")){
             String[] connectionData = gameRepository.getConnectInfo(gameName);
             ResponseStatuses responseStatus = Client.connect(connectionData[0], connectionData[1],
                     ((ByteBuf)msg).toString(Charset.defaultCharset()));
 
-            Player player = tokenService.getPlayerByToken(getToken(rawData));
+            Player player = tokenService.getPlayerByToken(command.get("token"));
 
             switch (responseStatus){
                 case OK:
-                    Integer betSum = Integer.parseInt(rawData[rawData.length-1]);
+                    Integer betSum = Integer.parseInt(command.get("sum"));
                     player.setBalance(player.getBalance() - betSum);
                     playerRepository.save(player);
 
@@ -56,20 +57,19 @@ public class GameHandlerService {
         }
     }
 
-    private String getGameName(String[] rawData){
-        try {
-            return rawData[1];
-        } catch (Exception e){
-            return "error";
-        }
+    @Override
+    String[] getCommandTrigger() {
+        return new String[]{"game"};
     }
 
-    private String getToken(String[] rawData){
+    @Override
+    Map<String, String> decryptByteBuff(ByteBuf byteBuf) {
         try {
-            return rawData[2];
-        } catch (Exception e){
-            return "error";
+            String[] rawData = byteBuf.toString(Charset.defaultCharset()).trim().split(" ");
+
+            return Map.of("gameName", rawData[1], "token", rawData[2], "bet", rawData[3], "sum", rawData[4]);
+        } catch (Exception e) {
+            return Map.of("error", "error");
         }
     }
-
 }

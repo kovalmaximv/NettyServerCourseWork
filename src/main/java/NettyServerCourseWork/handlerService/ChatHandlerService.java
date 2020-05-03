@@ -1,6 +1,5 @@
 package NettyServerCourseWork.handlerService;
 
-import NettyServerCourseWork.model.Message;
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.service.SessionService;
@@ -11,7 +10,7 @@ import io.netty.channel.ChannelHandlerContext;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class ChatHandlerService {
+public class ChatHandlerService extends BaseHandlerService {
 
     private final TokenService tokenService;
     private final PlayerRepository playerRepository;
@@ -24,7 +23,7 @@ public class ChatHandlerService {
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        Map<String, String> data = getMapData((ByteBuf) msg);
+        Map<String, String> data = decryptByteBuff((ByteBuf) msg);
 
         String tokenTo = tokenService.getToken(playerRepository.findByUsername(data.get("to")));
         Player playerFrom = tokenService.getPlayerByToken(data.get("token"));
@@ -33,8 +32,14 @@ public class ChatHandlerService {
         sessionService.sendMessage(playerFrom, playerTo, "Message. From: " + playerFrom.getUsername() + ". Message: " + data.get("message") + "\n");
     }
 
-    private Map<String, String> getMapData(ByteBuf data){
-        String[] rawData =  (data).toString(Charset.defaultCharset()).trim().split(" ");
+    @Override
+    String[] getCommandTrigger() {
+        return new String[]{"chat"};
+    }
+
+    @Override
+    Map<String, String> decryptByteBuff(ByteBuf byteBuf) {
+        String[] rawData =  (byteBuf).toString(Charset.defaultCharset()).trim().split(" ");
 
         try {
             return Map.of("command",rawData[0],"token", rawData[1],"to", rawData[2], "message", rawData[3]);
