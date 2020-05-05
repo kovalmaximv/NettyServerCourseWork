@@ -33,7 +33,7 @@ public class GameResultHandlerService extends BaseHandlerService{
             playerRepository.save(player);
         }
 
-        sessionService.sendNotification(player, command.get("message"));
+        sessionService.sendNotification(player, String.join(" ", command.get("message")));
     }
 
     @Override
@@ -50,7 +50,11 @@ public class GameResultHandlerService extends BaseHandlerService{
         command.put("token", rawData[1]);
         command.put("state", rawData[2]);
         command.put("sum", rawData[3]);
-        command.put("message", Arrays.toString(Arrays.copyOfRange(rawData, 4, rawData.length)));
+        command.put("message", String.join(" ", Arrays.copyOfRange(rawData, 4, rawData.length)));
+
+        if(command.get("message").equals("")){
+            command.put("message", "null");
+        }
 
         return command;
     }

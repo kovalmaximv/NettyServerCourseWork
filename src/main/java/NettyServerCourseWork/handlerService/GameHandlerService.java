@@ -6,7 +6,7 @@ import NettyServerCourseWork.repository.GameRepository;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.service.SessionService;
 import NettyServerCourseWork.service.TokenService;
-import NettyServerCourseWork.util.ResponseStatuses;
+import NettyServerCourseWork.util.ResponseStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -29,26 +29,30 @@ public class GameHandlerService extends BaseHandlerService{
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Map<String, String> command = decryptByteBuff((ByteBuf)msg);
-        String gameName = command.get("gameName");
-        if(!gameName.equals("error")){
-            String[] connectionData = gameRepository.getConnectInfo(gameName);
-            ResponseStatuses responseStatus = Client.connect(connectionData[0], connectionData[1],
-                    ((ByteBuf)msg).toString(Charset.defaultCharset()));
-
+        if(!command.get("gameName").equals("error")){
             Player player = tokenService.getPlayerByToken(command.get("token"));
 
-            switch (responseStatus){
-                case OK:
+            if(Integer.parseInt(command.get("sum")) > player.getBalance()){
+                sessionService.sendNotification(player, "Недостаточный баланс для данной ставки.\n");
+                return;
+            }
+
+            String[] connectionData = gameRepository.getConnectInfo(command.get("gameName"));
+            ResponseStatus responseStatus = Client.connect(connectionData[0], connectionData[1],
+                    ((ByteBuf)msg).toString(Charset.defaultCharset()));
+
+            switch (responseStatus.getCode()){
+                case 200: //OK
                     Integer betSum = Integer.parseInt(command.get("sum"));
                     player.setBalance(player.getBalance() - betSum);
                     playerRepository.save(player);
 
                     sessionService.sendNotification(player, "Ваша ставка принята, ожидайте ответа по окончанию игры.\n");
                     break;
-                case FULL_LOBBY:
+                case 300: //Full lobby
                     sessionService.sendNotification(player, "В игровом лобби нет места, обратитесь позже.\n");
                     break;
-                case INTERNAL_ERROR:
+                case 400: //Internal error
                     sessionService.sendNotification(player, "Произошла ошибка, просим обратиться в тех поддержку.\n");
                     break;
             }
