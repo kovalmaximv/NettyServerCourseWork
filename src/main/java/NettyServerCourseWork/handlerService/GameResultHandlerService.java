@@ -53,7 +53,7 @@ public class GameResultHandlerService extends BaseHandlerService{
         command.put("message", String.join(" ", Arrays.copyOfRange(rawData, 4, rawData.length)));
 
         if(command.get("message").equals("")){
-            command.put("message", "null");
+            command.put("message", command.get("sum"));
         }
 
         return command;
