@@ -1,6 +1,6 @@
 package NettyServerCourseWork.Client;
 
-import NettyServerCourseWork.model.ResponseData;
+import NettyServerCourseWork.util.ResponseStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -9,11 +9,11 @@ import java.nio.charset.Charset;
 
 public class ClientHandler extends ChannelInboundHandlerAdapter {
     private String message;
-    private ResponseData responseData;
+    private ResponseStatus responseStatus;
 
-    public ClientHandler(String message, ResponseData responseData) {
+    public ClientHandler(String message, ResponseStatus responseStatus) {
         this.message = message;
-        this.responseData = responseData;
+        this.responseStatus = responseStatus;
     }
 
     @Override
@@ -24,13 +24,23 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         String resp = ((ByteBuf) msg).toString(Charset.defaultCharset()).trim(); // (1)
-        if("200".equals(resp)){
-            responseData.setIntValue(200);
-            responseData.setCode("OK");
+
+        if(!resp.equals("")){
+            switch (resp){
+                case "200":
+                    responseStatus.setCode(200);
+                    responseStatus.setMessage("OK");
+                    break;
+                case "300":
+                    responseStatus.setCode(300);
+                    responseStatus.setMessage("FULL_LOBBY");
+                    break;
+            }
         } else {
-            responseData.setIntValue(300);
-            responseData.setCode("Error");
+            responseStatus.setCode(400);
+            responseStatus.setMessage("INTERNAL_ERROR");
         }
+
         ctx.close();
     }
 

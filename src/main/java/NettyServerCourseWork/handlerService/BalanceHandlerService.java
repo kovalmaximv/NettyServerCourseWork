@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class BalanceHandlerService {
+public class BalanceHandlerService extends BaseHandlerService {
 
     private final TokenService tokenService;
     private final PlayerRepository playerRepository;
@@ -21,7 +21,7 @@ public class BalanceHandlerService {
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        Map<String, String> data = getMapData((ByteBuf) msg);
+        Map<String, String> data = decryptByteBuff((ByteBuf) msg);
         switch (data.get("command")){
             case "balance":
                 ctx.channel().writeAndFlush(">>Balance: " + getBalance(data) + "\n");
@@ -35,6 +35,29 @@ public class BalanceHandlerService {
         }
     }
 
+    @Override
+    String[] getCommandTrigger() {
+        return new String[]{"balance"};
+    }
+
+    @Override
+    Map<String, String> decryptByteBuff(ByteBuf byteBuf) {
+        String[] rawData = byteBuf.toString(Charset.defaultCharset()).trim().split(" ");
+
+        try {
+            if(rawData[0].equals("balance")){
+                return Map.of("command", rawData[0],
+                        "token", rawData[1]);
+            } else {
+                return Map.of("command", rawData[0],
+                        "token", rawData[1],
+                        "sum", rawData[2]);
+            }
+        } catch (Exception e){
+            return Map.of("command", "error");
+        }
+    }
+
     @Transactional
     void pay(Map<String, String> data){
         Player player = tokenService.getPlayerByToken(data.get("token"));
@@ -45,22 +68,5 @@ public class BalanceHandlerService {
     private Integer getBalance(Map<String, String> data){
         Player player = tokenService.getPlayerByToken(data.get("token"));
         return player.getBalance();
-    }
-
-    private Map<String, String> getMapData(ByteBuf data){
-        String[] rawData = ((ByteBuf) data).toString(Charset.defaultCharset()).trim().split(" ");
-
-        try {
-            if(rawData[0].equals("balance")){
-                return Map.of("command", rawData[0],
-                        "token", rawData[1]);
-            } else {
-                return Map.of("command", rawData[0],
-                        "token", rawData[1],
-                            "sum", rawData[2]);
-            }
-        } catch (Exception e){
-            return Map.of("command", "error");
-        }
     }
 }

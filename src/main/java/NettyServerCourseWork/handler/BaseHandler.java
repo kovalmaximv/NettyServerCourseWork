@@ -27,11 +27,7 @@ public class BaseHandler extends ChannelInboundHandlerAdapter {
 
     private final SessionService sessionService;
 
-    public BaseHandler(
-            SessionService sessionService,
-            TokenService tokenService,
-            PlayerRepository playerRepository,
-            GameRepository gameRepository) {
+    public BaseHandler(SessionService sessionService, TokenService tokenService, PlayerRepository playerRepository, GameRepository gameRepository) {
         this.sessionService = sessionService;
         this.chatHandlerService = new ChatHandlerService(tokenService, playerRepository, sessionService);
         this.balanceHandlerService = new BalanceHandlerService(tokenService, playerRepository);

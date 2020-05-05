@@ -1,19 +1,19 @@
 package NettyServerCourseWork.handlerService;
 
 import NettyServerCourseWork.Client.Client;
-import NettyServerCourseWork.model.Notification;
 import NettyServerCourseWork.model.Player;
-import NettyServerCourseWork.model.ResponseData;
 import NettyServerCourseWork.repository.GameRepository;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.service.SessionService;
 import NettyServerCourseWork.service.TokenService;
+import NettyServerCourseWork.util.ResponseStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.nio.charset.Charset;
+import java.util.Map;
 
-public class GameHandlerService {
+public class GameHandlerService extends BaseHandlerService{
 
     private final GameRepository gameRepository;
     private final TokenService tokenService;
@@ -28,44 +28,52 @@ public class GameHandlerService {
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        String[] rawData = ((ByteBuf)msg).toString(Charset.defaultCharset()).trim().split(" ");
-        String gameName = getGameName(rawData);
-        if(!gameName.equals("error")){
-            String[] connectionData = gameRepository.getConnectInfo(gameName);
-            ResponseData responseData = Client.connect(connectionData[0], connectionData[1],
-                    ((ByteBuf)msg).toString(Charset.defaultCharset()));
+        Map<String, String> command = decryptByteBuff((ByteBuf)msg);
+        if(!command.get("gameName").equals("error")){
+            Player player = tokenService.getPlayerByToken(command.get("token"));
 
-            Player player = tokenService.getPlayerByToken(getToken(rawData));
-
-            if(responseData.getIntValue() == 200){
-                Integer betSum = Integer.parseInt(rawData[rawData.length-1]);
-                player.setBalance(player.getBalance() - betSum);
-                playerRepository.save(player);
-
-                sessionService.sendNotification(player, "Ваша ставка принята, ожидайте ответа по окончанию игры.\n");
-            } else {
-                sessionService.sendNotification(player, "В игровом лобби нет места, обратитесь позже.\n");
+            if(Integer.parseInt(command.get("sum")) > player.getBalance()){
+                sessionService.sendNotification(player, "Недостаточный баланс для данной ставки.\n");
+                return;
             }
 
+            String[] connectionData = gameRepository.getConnectInfo(command.get("gameName"));
+            ResponseStatus responseStatus = Client.connect(connectionData[0], connectionData[1],
+                    ((ByteBuf)msg).toString(Charset.defaultCharset()));
+
+            switch (responseStatus.getCode()){
+                case 200: //OK
+                    Integer betSum = Integer.parseInt(command.get("sum"));
+                    player.setBalance(player.getBalance() - betSum);
+                    playerRepository.save(player);
+
+                    sessionService.sendNotification(player, "Ваша ставка принята, ожидайте ответа по окончанию игры.\n");
+                    break;
+                case 300: //Full lobby
+                    sessionService.sendNotification(player, "В игровом лобби нет места, обратитесь позже.\n");
+                    break;
+                case 400: //Internal error
+                    sessionService.sendNotification(player, "Произошла ошибка, просим обратиться в тех поддержку.\n");
+                    break;
+            }
         } else {
             ctx.channel().writeAndFlush("Неверное название игры.\n");
         }
     }
 
-    private String getGameName(String[] rawData){
-        try {
-            return rawData[1];
-        } catch (Exception e){
-            return "error";
-        }
+    @Override
+    String[] getCommandTrigger() {
+        return new String[]{"game"};
     }
 
-    private String getToken(String[] rawData){
+    @Override
+    Map<String, String> decryptByteBuff(ByteBuf byteBuf) {
         try {
-            return rawData[2];
-        } catch (Exception e){
-            return "error";
+            String[] rawData = byteBuf.toString(Charset.defaultCharset()).trim().split(" ");
+
+            return Map.of("gameName", rawData[1], "token", rawData[2], "bet", rawData[3], "sum", rawData[4]);
+        } catch (Exception e) {
+            return Map.of("error", "error");
         }
     }
-
 }

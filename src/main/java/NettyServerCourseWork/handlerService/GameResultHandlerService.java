@@ -1,6 +1,5 @@
 package NettyServerCourseWork.handlerService;
 
-import NettyServerCourseWork.model.Notification;
 import NettyServerCourseWork.model.Player;
 import NettyServerCourseWork.repository.PlayerRepository;
 import NettyServerCourseWork.service.SessionService;
@@ -10,8 +9,10 @@ import io.netty.channel.ChannelHandlerContext;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
-public class GameResultHandlerService {
+public class GameResultHandlerService extends BaseHandlerService{
     private final TokenService tokenService;
     private final PlayerRepository playerRepository;
     private final SessionService sessionService;
@@ -24,15 +25,38 @@ public class GameResultHandlerService {
     }
 
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        String[] rawData = ((ByteBuf)msg).toString(Charset.defaultCharset()).trim().split(" ");
+        Map<String, String> command = decryptByteBuff((ByteBuf) msg);
 
-        Player player = tokenService.getPlayerByToken(rawData[1]);
-        if(Integer.parseInt(rawData[rawData.length - 1]) > 0) {
-            player.setBalance(player.getBalance() + Integer.parseInt(rawData[rawData.length - 1]));
+        Player player = tokenService.getPlayerByToken(command.get("token"));
+        if(Integer.parseInt(command.get("sum")) > 0) {
+            player.setBalance(player.getBalance() + Integer.parseInt(command.get("sum")));
             playerRepository.save(player);
         }
 
-        sessionService.sendNotification(player, Arrays.toString(rawData));
+        sessionService.sendNotification(player, String.join(" ", command.get("message")));
+    }
+
+    @Override
+    String[] getCommandTrigger() {
+        return new String[]{"gameResults"};
+    }
+
+    @Override
+    Map<String, String> decryptByteBuff(ByteBuf byteBuf) {
+        String[] rawData = byteBuf.toString(Charset.defaultCharset()).trim().split(" ");
+
+        HashMap<String, String> command = new HashMap<>();
+        command.put("command", rawData[0]);
+        command.put("token", rawData[1]);
+        command.put("state", rawData[2]);
+        command.put("sum", rawData[3]);
+        command.put("message", String.join(" ", Arrays.copyOfRange(rawData, 4, rawData.length)));
+
+        if(command.get("message").equals("")){
+            command.put("message", command.get("sum"));
+        }
+
+        return command;
     }
 
 }
