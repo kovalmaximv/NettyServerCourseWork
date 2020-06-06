@@ -26,15 +26,12 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         String resp = ((ByteBuf) msg).toString(Charset.defaultCharset()).trim(); // (1)
 
         if(!resp.equals("")){
-            switch (resp){
-                case "200":
-                    responseStatus.setCode(200);
-                    responseStatus.setMessage("OK");
-                    break;
-                case "300":
-                    responseStatus.setCode(300);
-                    responseStatus.setMessage("FULL_LOBBY");
-                    break;
+            if(resp.contains("200")){
+                responseStatus.setCode(200);
+                responseStatus.setMessage("OK");
+            } else {
+                responseStatus.setCode(300);
+                responseStatus.setMessage("FULL_LOBBY");
             }
         } else {
             responseStatus.setCode(400);

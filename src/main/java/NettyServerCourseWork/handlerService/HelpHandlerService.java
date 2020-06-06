@@ -19,16 +19,27 @@ public class HelpHandlerService extends BaseHandlerService {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         Map<String, String> command = decryptByteBuff((ByteBuf)msg);
         if (command.get("options") != null) {
-            ctx.channel().writeAndFlush(gameRepository.getGameList().toString());
+            String info = "\n---\nСписок игр с кратким описанием:\n" +
+                    "1) Кости - gamename: dice - классические кости для 2+ человек\n" +
+                    "2) Рулетка - gamename: roulette - рулетка для 2+ человек\n---\n";
+
+            ctx.channel().writeAndFlush(info);
         } else {
-            String message = ">>Command: \n>>\tlogin <username> <password>\n"+
-                    ">>\tregistration <username> <password>\n" +
-                    ">>\tgame <gamename> <token> [bet] <ставка>\n" +
-                    ">>\tbalance <token>\n" +
-                    ">>\tpay <token> <sum>\n" +
-                    ">>\tchat <token> <to> <message>\n" +
-                    ">>\thelp game\n" +
-                    ">>\thelp\n";
+            String greetings = "\n---\nРаспределенное казино находится в альфа доступе, со временем команды могут полностью " +
+                    "изменяться, или менять свою сигнатуру.\n---\n" +
+                    "Для взаимодействия с казино необходимо хранить свой токен и держать его в секрете. " +
+                    "В случае утечки вашего токена в открытый доступ, просим немедленно его заменить соответствующей командой.\n---\n" +
+                    "Стоит отметить, решение с токенам, на данный момент, временно и связанно " +
+                    "с ограничениями локальной разработки учебного проекта, решить эту проблему поможет закупка " +
+                    "выделенного сервера и выделенного белого IP для сервера. Спасибо за понимание.\n---\n";
+            String message = greetings + "Основные команды: \n>>\tlogin <username> <password> - вход в систему\n"+
+                    ">>\tregistration <username> <password> - регистрация в системе\n" +
+                    ">>\thelp game - список игр\n" +
+                    ">>\tgame <gamename> <token> [sum] <bet> - подключение к игре <gamename> со ставкой [sum] и выбором <bet>\n" +
+                    ">>\tbalance <token> - узнать свой баланс\n" +
+                    ">>\tpay <token> <sum> - пополнить свой баланс на <sum> рублей\n" +
+                    ">>\tchat <token> <to> <message> - отправить сообщение <message> игроку с ником <to>\n" +
+                    ">>\thelp\n---\n";
             ctx.channel().writeAndFlush(message);
         }
     }

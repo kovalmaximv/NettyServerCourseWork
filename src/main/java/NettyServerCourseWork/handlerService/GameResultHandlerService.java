@@ -33,7 +33,7 @@ public class GameResultHandlerService extends BaseHandlerService{
             playerRepository.save(player);
         }
 
-        sessionService.sendNotification(player, String.join(" ", command.get("message")));
+        sessionService.sendNotification(player, ("\n---\nВ последней игре в кости вы выиграли 100 рублей\n---\n"));
     }
 
     @Override

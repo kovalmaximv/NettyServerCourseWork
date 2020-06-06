@@ -71,9 +71,13 @@ public class GameHandlerService extends BaseHandlerService{
         try {
             String[] rawData = byteBuf.toString(Charset.defaultCharset()).trim().split(" ");
 
-            return Map.of("gameName", rawData[1], "token", rawData[2], "bet", rawData[3], "sum", rawData[4]);
+            if (rawData.length > 4){
+                return Map.of("gameName", rawData[1], "token", rawData[2], "bet", rawData[4], "sum", rawData[3]);
+            } else {
+                return Map.of("gameName", rawData[1], "token", rawData[2], "bet", "", "sum", rawData[3]);
+            }
         } catch (Exception e) {
-            return Map.of("error", "error");
+            return Map.of("gameName", "error");
         }
     }
 }

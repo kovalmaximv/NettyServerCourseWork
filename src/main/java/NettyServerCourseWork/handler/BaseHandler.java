@@ -64,6 +64,12 @@ public class BaseHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        ctx.channel().writeAndFlush("---\nДобро пожаловать в систему распределенного казино! Для справки введите help.\n---\n");
+        super.channelRegistered(ctx);
+    }
+
+    @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         sessionService.unregisterSessionUser(ctx.channel());
         super.channelUnregistered(ctx);

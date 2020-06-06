@@ -32,7 +32,7 @@ public class RegistrationHandlerService extends BaseHandlerService {
 
                     sessionService.registerSessionUser(player.getId(), ctx.channel());
 
-                    ctx.channel().writeAndFlush(token + "\n");
+                    ctx.channel().writeAndFlush("\n---\nРегистрация прошла успешно, ваш токен: {" + token + "}\n---\n");
                 } catch (Exception e){
                     ctx.channel().writeAndFlush("error: " + e.getMessage() + "\n");
                 }
@@ -47,7 +47,7 @@ public class RegistrationHandlerService extends BaseHandlerService {
 
                     sessionService.registerSessionUser(player.getId(), ctx.channel());
 
-                    ctx.channel().writeAndFlush(token + "\n");
+                    ctx.channel().writeAndFlush("\n---\nДобро пожаловать " + username + " ваш токен: {" + token + "}\n---\n");
                 } else {
                     ctx.channel().writeAndFlush("error: Invalid username and/or password\n");
                 }
